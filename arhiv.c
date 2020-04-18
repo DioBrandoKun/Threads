@@ -23,7 +23,7 @@ struct Counter
     unsigned long int id;
 };
 
-char* Shit(unsigned long int id)
+char* LongToStr(unsigned long int id)
 {
     char* Conv=(char*)malloc(10*sizeof(char));
     for(int j=0;j<10;j++) Conv[j]='0';
@@ -37,7 +37,7 @@ char* Shit(unsigned long int id)
     return Conv;
 }
 
-char* GreaterShit(char* Name,int n)
+char* AddChar(char* Name,int n)
 {
  char* Conv=(char*)malloc((n+2)*sizeof(char));
  for(int j=0;j<n+2;j++) Conv[j]='/';
@@ -48,7 +48,7 @@ char* GreaterShit(char* Name,int n)
  return Conv;
 }
 
-int Govno(char* Name,int n)
+int StrToLong(char* Name,int n)
 {
  int Summ=0;
  for(int i=0;i<n;i++)
@@ -73,8 +73,6 @@ char* MyCat(char* Name,int n,char* Name2,int n2)
      Conv[n+i]=Name2[i];
  }
  Conv[n+n2]='\0';
- //printf("%i  %i ",n,n2);
- //printf("%s %lu\n",Conv,strlen(Conv));
  return Conv;
 }
 
@@ -90,7 +88,7 @@ char* MyCatChar(char* Name,int n,char Name2)
  return Conv;
 }
 
-void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long int Par,char* path, int outbuff) 
+int printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long int Par,char* path, int outbuff) 
 {
     char block[1024];
     int nread;
@@ -100,7 +98,7 @@ void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long in
     if ((dp = opendir(dir)) == NULL) 
     {  
         fprintf(stderr, "cannot open directory: %s\n", dir);  
-        return; 
+        return -1; 
     } 
     chdir(dir); 
     while((entry = readdir(dp)) != NULL) 
@@ -108,7 +106,6 @@ void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long in
         lstat(entry->d_name, &statbuf);  
         if (!S_ISDIR(statbuf.st_mode)) 
         {   /* Находит каталог, но игнорирует . и .. */   
-            //write(out,entry->d_name,strlen(entry->d_name));
             char* fullpath="";
             char Mode[5]="";
             sprintf(Mode,"%i",statbuf.st_mode);
@@ -117,20 +114,19 @@ void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long in
             unsigned int AllInf=0;
             int fread=open(fullpath,O_RDONLY);
             coun->id++;
-            while((nread=read(fread,block,sizeof(block)))>0)
-            {
-             write(outbuff,block,nread);
-             AllInf+=nread;
-            }
-            write(out,GreaterShit(entry->d_name,strlen(entry->d_name)),strlen(entry->d_name)+2);
-            write(out,Shit(coun->id),10);//свой id
-            write(out,Shit(Par),10);//id предка
+            if(fread>0)
+                while((nread=read(fread,block,sizeof(block)))>0)
+                {
+                write(outbuff,block,nread);
+                AllInf+=nread;
+                }
+            else printf("Can't open %s file\n",entry->d_name);
+            write(out,AddChar(entry->d_name,strlen(entry->d_name)),strlen(entry->d_name)+2);
+            write(out,LongToStr(coun->id),10);//свой id
+            write(out,LongToStr(Par),10);//id предка
             write(out,Mode,5);
-            write(out,Shit(AllInf),10);
-            //printf("%s", Shit(coun->id));
-            //printf("%*s%s\n", depth, " ", entry->d_name); 
+            write(out,LongToStr(AllInf),10);
             close(fread);
-            //printf("%*s%s/\n", depth, "", entry->d_name);   /* Рекурсивный вызов с новый отступом */   
         }
     } 
     seekdir(dp,0);
@@ -142,15 +138,12 @@ void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long in
             if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0)    
             continue;
             coun->id++;
-            //printf("%s", Shit(coun->id));
-            //printf("%*s%s/\n", depth, "", entry->d_name);   /* Рекурсивный вызов с новый отступом */   
             char* fullpath="";
-            //lseek(out,Pozition->id,SEEK_SET);
             char Mode[5]="";
             sprintf(Mode,"%i",statbuf.st_mode);
-            write(out,GreaterShit(entry->d_name,strlen(entry->d_name)),strlen(entry->d_name)+2);
-            write(out,Shit(coun->id),10);
-            write(out,Shit(Par),10);
+            write(out,AddChar(entry->d_name,strlen(entry->d_name)),strlen(entry->d_name)+2);
+            write(out,LongToStr(coun->id),10);
+            write(out,LongToStr(Par),10);
             write(out,"Dir",3);
             write(out,Mode,5);
             fullpath=MyCat(path,strlen(path),"/",1);
@@ -160,6 +153,7 @@ void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long in
     } 
     chdir(".."); 
     closedir(dp);
+    return 0;
 }   
 
 int main(int argc,char* args[]) {
@@ -177,13 +171,17 @@ int main(int argc,char* args[]) {
     struct Counter Root;
     Root.id=1;
     char* name=&(*(strrchr(directory,'/')+1));
-    char* arhname=MyCat(directory,strlen(directory),".MEGARAR",strlen(".MEGARAR"));;
+    char* arhname=MyCat(directory,strlen(directory),".MEGARAR",strlen(".MEGARAR"));
     char* filebuff1=MyCat(directory,strlen(directory),"FileArch",strlen("FileArch"));
     char* filebuff2=MyCat(directory,strlen(directory),"FileArchBuff",strlen("FileArchBuff"));
     out = open(filebuff1,  O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
     int outbuff = open(filebuff2, O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
     int fin = open(arhname, O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
-    printdir(directory, 1,out, &Cou,0,directory,outbuff); ///home/nikita/v5.5
+    int result=printdir(directory, 1,out, &Cou,0,directory,outbuff); 
+    if(result<0)
+    {
+        return -1;
+    }
     char blocks[4096];
     unsigned long int Sdvig=0;
     lseek(outbuff,0,SEEK_SET);
@@ -195,10 +193,10 @@ int main(int argc,char* args[]) {
     lstat(directory, &buff);  
     sprintf(Mode,"%i",buff.st_mode);
     Sdvig+=40+strlen(name);
-    write(fin,Shit(Sdvig),10);
-    write(fin,GreaterShit(name,strlen(name)),strlen(name)+2);
-    write(fin,Shit(0),10);
-    write(fin,Shit(0),10);
+    write(fin,LongToStr(Sdvig),10);
+    write(fin,AddChar(name,strlen(name)),strlen(name)+2);
+    write(fin,LongToStr(0),10);
+    write(fin,LongToStr(0),10);
     write(fin,"Dir",3);
     write(fin,Mode,5);
     lseek(out,0,SEEK_SET);
@@ -225,10 +223,15 @@ int main(int argc,char* args[]) {
     struct FileWr RootList[255];
     unsigned int Numbr=0;
     int anti=open(args[1],O_RDONLY);
+    if(anti<0)
+    {
+        printf("No such file");
+        return -1;
+    }
     unsigned long Move=0;
     unsigned long RightNow=10;
     read(anti,antihype,10);
-    Move=Govno(antihype,10);
+    Move=StrToLong(antihype,10);
     unsigned long stop=Move;
     short int name=2;
     short int id=0;
@@ -253,7 +256,6 @@ int main(int argc,char* args[]) {
                 {
                     name--;
                     if(name==0)
-                    //printf("%s ",namebuff);
                         id=10;
                 }
             }
@@ -264,7 +266,6 @@ int main(int argc,char* args[]) {
                 if(id==0)
                 {
                     parent=10;
-                    //printf("%s ",idbuff);
                 }
 
             }
@@ -276,7 +277,6 @@ int main(int argc,char* args[]) {
                 {
                     dir=1;
                     mode=5;
-                    //printf("%s ",parbuff);
                 }
 
             } 
@@ -289,20 +289,17 @@ int main(int argc,char* args[]) {
                     char* place="";
                     for(int j=0;j<Numbr;j++)
                        {
-                         if(RootList[j].id==Govno(parbuff,10))
+                         if(RootList[j].id==StrToLong(parbuff,10))
                         {
                             place=RootList[j].path;
                         }
                        }
-                    //printf("%s %lu ",place,strlen(place));
                     place=MyCat(place,strlen(place),namebuff,strlen(namebuff)-1);
-                    int fil=open(place,O_CREAT|O_WRONLY,Govno(modebuff,5));
-                    unsigned long CopyItem=Govno(filbuff,10);
+                    int fil=open(place,O_CREAT|O_WRONLY,StrToLong(modebuff,5));
+                    unsigned long CopyItem=StrToLong(filbuff,10);
                     char Buf[2048];
                     lseek(anti,Move,SEEK_SET);
                     Move+=CopyItem;
-                    //printf("%s %lu ",namebuff,strlen(namebuff));
-                    //printf("%s %lu\n",place,strlen(place));
                     while(1)
                     {
                         if(CopyItem>2048)
@@ -344,8 +341,8 @@ int main(int argc,char* args[]) {
                     if(dirbuff)
                     {
                         dirbuff=0;
-                        RootList[Numbr].id=Govno(idbuff,10);
-                        RootList[Numbr].id_Parent=Govno(parbuff,10);
+                        RootList[Numbr].id=StrToLong(idbuff,10);
+                        RootList[Numbr].id_Parent=StrToLong(parbuff,10);
                         if(RootList[Numbr].id!=RootList[Numbr].id_Parent)
                         {
                             for(int j=0;j<Numbr;j++)
@@ -361,8 +358,7 @@ int main(int argc,char* args[]) {
                             RootList[Numbr].path=MyCatChar(directory,strlen(directory),'/');
                             RootList[Numbr].path=MyCat(directory,strlen(directory),namebuff,strlen(namebuff)-1);
                         }
-                        mkdir(RootList[Numbr].path,Govno(modebuff,5));
-                        //printf("%s \n",modebuff);
+                        mkdir(RootList[Numbr].path,StrToLong(modebuff,5));
                         name=2;
                         modebuff="";
                         namebuff="";
@@ -374,7 +370,6 @@ int main(int argc,char* args[]) {
                     else
                     {
                        file=10;
-                       //printf("%s ",modebuff);
                     }
                     
                 }
@@ -382,7 +377,6 @@ int main(int argc,char* args[]) {
             RightNow++;
             if(RightNow==stop)
             {
-                //printf("%i",i);
                 break;
             }
         }
