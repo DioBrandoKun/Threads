@@ -62,7 +62,7 @@ int Govno(char* Name,int n)
 
 char* MyCat(char* Name,int n,char* Name2,int n2)
 {
- char* Conv=(char*)malloc((n+n2)*sizeof(char));
+ char* Conv=(char*)malloc((n+n2+1)*sizeof(char));
  for(int j=0;j<n+n2;j++) Conv[j]='/';
  for(int i=0;i<n;i++)
     {
@@ -162,24 +162,28 @@ void printdir(char *dir, int depth,int out,struct Counter* coun,unsigned long in
     closedir(dp);
 }   
 
-int main() {
+int main(int argc,char* args[]) {
+    char* directory=args[1];
+    if(args[2][0]=='p')
+    {
     char Mode[5];
     int nread;
     struct stat buff;
     int out;
-    /*
-    sprintf(Mode,"%i",buff.st_mode);
     struct Counter Cou;
     Cou.id=0;
     struct Counter Mov;
     Mov.id=0; 
     struct Counter Root;
     Root.id=1;
-    char* pla="/home/nikita/shit";
-    out = open("File",  O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
-    int outbuff = open("FileBuff", O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
-    int fin = open("Fin.txt", O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
-    printdir(pla, 1,out, &Cou,0,pla,outbuff); ///home/nikita/v5.5
+    char* name=&(*(strrchr(directory,'/')+1));
+    char* arhname=MyCat(directory,strlen(directory),".MEGARAR",strlen(".MEGARAR"));;
+    char* filebuff1=MyCat(directory,strlen(directory),"FileArch",strlen("FileArch"));
+    char* filebuff2=MyCat(directory,strlen(directory),"FileArchBuff",strlen("FileArchBuff"));
+    out = open(filebuff1,  O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
+    int outbuff = open(filebuff2, O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
+    int fin = open(arhname, O_RDWR|O_CREAT| O_APPEND, S_IRUSR|S_IWUSR);
+    printdir(directory, 1,out, &Cou,0,directory,outbuff); ///home/nikita/v5.5
     char blocks[4096];
     unsigned long int Sdvig=0;
     lseek(outbuff,0,SEEK_SET);
@@ -188,11 +192,11 @@ int main() {
         {
            Sdvig+=nread;
        }
-    lstat(pla, &buff);  
+    lstat(directory, &buff);  
     sprintf(Mode,"%i",buff.st_mode);
-    Sdvig+=40+strlen("shit");
+    Sdvig+=40+strlen(name);
     write(fin,Shit(Sdvig),10);
-    write(fin,GreaterShit("shit",strlen("shit")),strlen("shit")+2);
+    write(fin,GreaterShit(name,strlen(name)),strlen(name)+2);
     write(fin,Shit(0),10);
     write(fin,Shit(0),10);
     write(fin,"Dir",3);
@@ -209,15 +213,18 @@ int main() {
     printf("%i",nread);
     close(out);
     close(outbuff);
-    unlink("FileBuff");
-    unlink("File");*/
-    //char abc[80];
-    //*(abc)='f';
+    close(fin);
+    unlink(filebuff1);
+    unlink(filebuff2);
+    }
+    if(args[2][0]=='u')
+    {
+    char* unname=strrchr(directory,'/');
+    directory=MyCat(directory,strlen(directory)-strlen(unname),"",0);
     char antihype[4096];
     struct FileWr RootList[255];
     unsigned int Numbr=0;
-    char* directory="/home/nikita";
-    int anti=open("Fin.txt",O_RDONLY);
+    int anti=open(args[1],O_RDONLY);
     unsigned long Move=0;
     unsigned long RightNow=10;
     read(anti,antihype,10);
@@ -355,7 +362,6 @@ int main() {
                             RootList[Numbr].path=MyCat(directory,strlen(directory),namebuff,strlen(namebuff)-1);
                         }
                         mkdir(RootList[Numbr].path,Govno(modebuff,5));
-                        printf("%s ",RootList[Numbr].path);
                         //printf("%s \n",modebuff);
                         name=2;
                         modebuff="";
@@ -382,8 +388,7 @@ int main() {
         }
         if(RightNow==stop)
                 break;
+      }
     }
-    //printf("\n%lu",RightNow);
-    //printf(" %lu",Move);
     exit(0);
 }
